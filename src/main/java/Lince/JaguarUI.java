@@ -13,6 +13,8 @@ public class JaguarUI extends JFrame {
         //Acessa o diretório principal (Home)
         String userHome = System.getProperty("user.home");
         File file = new File("/home/groundzero/Documents");
+        JFrame frame = new JFrame();
+        JaguarRefresh refresh = new JaguarRefresh();
 
         //Verifica se o Caminho existe
         if(!file.exists()){
@@ -36,13 +38,13 @@ public class JaguarUI extends JFrame {
         //Fim Ver. de Arq.
 
         //Ajustes da janela do Programa
-        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        this.setTitle("Jaguar");
-        this.pack();
-        this.setSize(800, 600);
-        this.setLocationRelativeTo(null);
-        this.setVisible(true);
-        this.getContentPane().setBackground(Color.DARK_GRAY);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setTitle("Jaguar");
+        frame.pack();
+        frame.setSize(800, 600);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+        frame.getContentPane().setBackground(Color.DARK_GRAY);
         //Fim Aj. Jan.
 
         //Inicialização da ToolBar
@@ -56,9 +58,9 @@ public class JaguarUI extends JFrame {
         //Fim Botões
 
         //Conf. da Toolbar
-        jToolBar.add(nextButton);
+        jToolBar.add(refreshButton);
         jToolBar.add(deleteButton);
-        Container pane = this.getContentPane();
+        Container pane = frame.getContentPane();
         pane.add(jToolBar, BorderLayout.NORTH);
         //Fim Conf. Toolbar
 
@@ -92,18 +94,25 @@ public class JaguarUI extends JFrame {
                 if (confExclusao == JOptionPane.YES_OPTION) {
                     if (fileDelete.delete()) {
                         JOptionPane.showMessageDialog(null, "Arquivo Deletado!");
-                        refreshTree(new File("/home/groundzero/Documents"));
+                        refresh.refreshTree(new File("/home/groundzero/Documents"),frame);
                     } else {
                         JOptionPane.showMessageDialog(null, "Falaha na exclusão do arquivo, verifique a permissão ou se o arquivo/diretório ainda existe.");
                     }
                 }
             }
         });
+
+        refreshButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                refresh.refreshTree(new File("/home/groundzero/Documents"),frame);
+            }
+        });
         //Fim func. Bot.
 
         //"Seta" a visibilidade da janela e adiciona um sistema de rolgaem caso a pagina seja muito grande
-        this.add(scrollPane);
-        this.setVisible(true);
+        frame.add(scrollPane);
+        frame.setVisible(true);
         }
         //Fim Scroll
 
@@ -121,7 +130,7 @@ public class JaguarUI extends JFrame {
     }
     //Fim Mét. p/ Obj.
 
-    public void directories(DefaultMutableTreeNode dir, File file){
+    public static void directories(DefaultMutableTreeNode dir, File file){
         File[] files = file.listFiles();
         if(files != null){
             for(File f : files){
@@ -133,35 +142,4 @@ public class JaguarUI extends JFrame {
             }
         }
     }
-
-    public void refreshTree(File root){
-        DefaultMutableTreeNode newTree = new DefaultMutableTreeNode(root.getPath());
-        directories(newTree,root);
-
-        this.getContentPane().removeAll();
-
-        JTree tree = new JTree(newTree);
-        JScrollPane scrollPane = new JScrollPane(tree);
-        tree.setBackground(Color.DARK_GRAY);
-        scrollPane.setBackground(Color.DARK_GRAY);
-
-        JButton nextButton = new JButton("Next");
-        JButton deleteButton = new JButton("Delete");
-        JButton backButton = new JButton("Back");
-        JButton refreshButton = new JButton("Refresh");
-
-        JToolBar jToolBar = new JToolBar();
-        jToolBar.add(nextButton);
-        jToolBar.add(deleteButton);
-
-        Container pane = this.getContentPane();
-        pane.add(jToolBar, BorderLayout.NORTH);
-
-        this.getContentPane().add(scrollPane);
-
-        this.revalidate();
-        this.repaint();
-    }
 }
-
-
