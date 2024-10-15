@@ -25,14 +25,17 @@ public class JaguarRefresh extends JFrame {
             tree.setBackground(Color.DARK_GRAY);
             scrollPane.setBackground(Color.DARK_GRAY);
 
-            JButton nextButton = new JButton("Next");
+            JButton searchButton = new JButton("Search");
             JButton deleteButton = new JButton("Delete");
             JButton backButton = new JButton("Back");
             JButton refreshButton = new JButton("Refresh");
 
             JToolBar jToolBar = new JToolBar();
+
             jToolBar.add(refreshButton);
             jToolBar.add(deleteButton);
+            jToolBar.add(searchButton);
+
 
             Container pane = frame.getContentPane();
             pane.add(jToolBar, BorderLayout.NORTH);
@@ -74,7 +77,7 @@ public class JaguarRefresh extends JFrame {
             frame.repaint();
         }
 
-    //Método para obter o caminho do objeto selecionado
+    //Métod para obter o caminho do objeto selecionado
     public String getFullPath(DefaultMutableTreeNode node){
         StringBuilder fullPath = new StringBuilder();
         TreeNode[] nodes = node.getPath();

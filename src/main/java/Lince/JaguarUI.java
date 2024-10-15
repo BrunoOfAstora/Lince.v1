@@ -1,5 +1,6 @@
 package Lince;
 import javax.swing.*;
+import javax.swing.filechooser.FileFilter;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
@@ -51,7 +52,7 @@ public class JaguarUI extends JFrame {
         JToolBar jToolBar = new JToolBar();
 
         // Botões
-        JButton nextButton = new JButton("Next");
+        JButton searchButton = new JButton("Search");
         JButton deleteButton = new JButton("Delete");
         JButton backButton = new JButton("Back");
         JButton refreshButton = new JButton("Refresh");
@@ -60,8 +61,10 @@ public class JaguarUI extends JFrame {
         //Conf. da Toolbar
         jToolBar.add(refreshButton);
         jToolBar.add(deleteButton);
+        jToolBar.add(searchButton);
         Container pane = frame.getContentPane();
         pane.add(jToolBar, BorderLayout.NORTH);
+        pane.setBackground(Color.DARK_GRAY);
         //Fim Conf. Toolbar
 
         //Root Node da JTree
@@ -73,7 +76,7 @@ public class JaguarUI extends JFrame {
         //Personalização da Janela
         JScrollPane scrollPane = new JScrollPane(tree);
         tree.setBackground(Color.DARK_GRAY);
-        scrollPane.setBackground(Color.DARK_GRAY);
+        scrollPane.setBackground(Color.GRAY);
         //Fim pers. Jan.
 
         //Funçoes do(s) botão(ões)
@@ -107,6 +110,14 @@ public class JaguarUI extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 refresh.refreshTree(new File("/home/groundzero/Documents"),frame);
             }
+        });
+
+        searchButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                    JFileChooser jFileChooser = new JFileChooser();
+                    jFileChooser.showOpenDialog(null);
+                }
         });
         //Fim func. Bot.
 
