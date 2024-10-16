@@ -1,156 +1,165 @@
 package Lince;
+
 import javax.swing.*;
-import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.IOException;
+import java.util.Date;
 
-public class JaguarUI extends JFrame {
+public class JaguarUI extends JFrame implements ActionListener {
+    private JTable table;
+    private JTree tree;
+    private DefaultMutableTreeNode rootNode;
+
     public JaguarUI() {
+        setTitle("Jaguar/Explorer");
+        setSize(900, 700);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
 
-        //Acessa o diretório principal (Home)
-        String userHome = System.getProperty("user.home");
-        File file = new File("/home/groundzero/Documents");
-        JFrame frame = new JFrame();
-        JaguarRefresh refresh = new JaguarRefresh();
+        getContentPane().setBackground(Color.DARK_GRAY);
+        setLayout(new BorderLayout());
 
-        //Verifica se o Caminho existe
-        if(!file.exists()){
-            System.out.println("Directory not found" + file.getPath());
-            return;
-        }else{
-            System.out.println("Directory accessed: " + file.getPath());
-        }
-        //Fim Ver.
 
-        //Verifica se há algum arquivo ou pasta no caminho
-        File[] files = file.listFiles();
-        if(files == null || files.length == 0){
-            System.out.println("Nothing found in: " + userHome);
-        }else{
-            System.out.println("Files found in userhome: " + userHome);
-            for(File f : files){
-                System.out.println(f.getName());
+        File rootDirectory = new File(System.getProperty("user.home") + "/Documents");
+        rootNode = new DefaultMutableTreeNode(rootDirectory.getPath());
+        tree = new JTree(rootNode);
+
+        directories(rootNode, rootDirectory);
+        table = createFileTable(rootDirectory);
+
+        JScrollPane treeScrollPane = new JScrollPane(tree);
+        treeScrollPane.setBackground(Color.DARK_GRAY);
+        JScrollPane tableScrollPane = new JScrollPane(table);
+        tableScrollPane.setBackground(Color.DARK_GRAY);
+
+        // Panel principal com SplitPane para dividir Árvore e Tabels
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, treeScrollPane, tableScrollPane);
+        splitPane.setDividerLocation(250);
+
+        // Toolbar com os botões
+        JToolBar toolBar = createToolBar(rootDirectory);
+
+        add(toolBar, BorderLayout.NORTH);
+        add(splitPane, BorderLayout.CENTER);
+        setVisible(true);
+    }
+
+    // Inicializa a JTable
+    private JTable createFileTable(File directory) {
+        String[] columnNames = {"Nome", "Tamanho", "Última Modificação"};
+        DefaultTableModel model = new DefaultTableModel(columnNames, 0);
+
+        File[] files = directory.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                Object[] rowData = {file.getName(), file.length(), new Date(file.lastModified())};
+                model.addRow(rowData);
             }
         }
-        //Fim Ver. de Arq.
 
-        //Ajustes da janela do Programa
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setTitle("Jaguar");
-        frame.pack();
-        frame.setSize(800, 600);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
-        frame.getContentPane().setBackground(Color.DARK_GRAY);
-        //Fim Aj. Jan.
+        JTable table = new JTable(model);
+        table.setFillsViewportHeight(true);
+        return table;
+    }
 
-        //Inicialização da ToolBar
-        JToolBar jToolBar = new JToolBar();
-
-        // Botões
-        JButton searchButton = new JButton("Search");
-        JButton deleteButton = new JButton("Delete");
-        JButton backButton = new JButton("Back");
+    // Cria uma barra de ferramentas com botões
+    private JToolBar createToolBar(File rootDirectory) {
+        JToolBar toolBar = new JToolBar();
         JButton refreshButton = new JButton("Refresh");
-        //Fim Botões
+        JButton deleteButton = new JButton("Delete");
+        JButton searchButton = new JButton("Search");
 
-        //Conf. da Toolbar
-        jToolBar.add(refreshButton);
-        jToolBar.add(deleteButton);
-        jToolBar.add(searchButton);
-        Container pane = frame.getContentPane();
-        pane.add(jToolBar, BorderLayout.NORTH);
-        pane.setBackground(Color.DARK_GRAY);
-        //Fim Conf. Toolbar
+        refreshButton.addActionListener(e -> refreshTree(rootDirectory));
+        deleteButton.addActionListener(e -> deleteSelectedFile());
+        searchButton.addActionListener(e -> searchFile());
 
-        //Root Node da JTree
-        DefaultMutableTreeNode treeNodes = new DefaultMutableTreeNode(file.getPath());
-        directories(treeNodes,file);
-        JTree tree = new JTree(treeNodes);
-        //Fim Node Tree
+        toolBar.add(refreshButton);
+        toolBar.add(deleteButton);
+        toolBar.add(searchButton);
 
-        //Personalização da Janela
-        JScrollPane scrollPane = new JScrollPane(tree);
-        tree.setBackground(Color.DARK_GRAY);
-        scrollPane.setBackground(Color.GRAY);
-        //Fim pers. Jan.
+        return toolBar;
+    }
 
-        //Funçoes do(s) botão(ões)
-        deleteButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) tree.getLastSelectedPathComponent();
-                if (selectedNode == null) {
-                    return;
-                }
-                File fileDelete = new File(getFullPath(selectedNode));
+    // Atualiza a árvore e a tabela
+    private void refreshTree(File directory) {
+        rootNode.removeAllChildren();
+        directories(rootNode, directory);
+        tree.updateUI();
 
-                if (selectedNode == null) {
-                    System.out.println("Nenhum arquivo ou diretório encontrado");
-                }
+        // Atualiza a tabela
+        table.setModel(createFileTable(directory).getModel());
+    }
 
-                int confExclusao = JOptionPane.showConfirmDialog(null, "Quer deletar o arquivo selecionado?");
-                if (confExclusao == JOptionPane.YES_OPTION) {
-                    if (fileDelete.delete()) {
-                        JOptionPane.showMessageDialog(null, "Arquivo Deletado!");
-                        refresh.refreshTree(new File("/home/groundzero/Documents"),frame);
-                    } else {
-                        JOptionPane.showMessageDialog(null, "Falaha na exclusão do arquivo, verifique a permissão ou se o arquivo/diretório ainda existe.");
-                    }
-                }
-            }
-        });
+    // Deleta o arquivo ou diretório selecionado na árvore
+    private void deleteSelectedFile() {
+        DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) tree.getLastSelectedPathComponent();
+        if (selectedNode == null) return;
 
-        refreshButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                refresh.refreshTree(new File("/home/groundzero/Documents"),frame);
-            }
-        });
-
-        searchButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                    JFileChooser jFileChooser = new JFileChooser();
-                    jFileChooser.showOpenDialog(null);
-                }
-        });
-        //Fim func. Bot.
-
-        //"Seta" a visibilidade da janela e adiciona um sistema de rolgaem caso a pagina seja muito grande
-        frame.add(scrollPane);
-        frame.setVisible(true);
+        File fileToDelete = new File(getFullPath(selectedNode));
+        int confirm = JOptionPane.showConfirmDialog(this, "Quer deletar o arquivo selecionado?");
+        if (confirm == JOptionPane.YES_OPTION && fileToDelete.delete()) {
+            JOptionPane.showMessageDialog(this, "Arquivo deletado com sucesso!");
+            refreshTree(fileToDelete.getParentFile());
+        } else {
+            JOptionPane.showMessageDialog(this, "Falha ao deletar o arquivo.");
         }
-        //Fim Scroll
+    }
 
-    //Método para obter o caminho do objeto selecionado
-    public String getFullPath(DefaultMutableTreeNode node){
+    // Abre um JFileChooser para buscar arquivos
+    private void searchFile() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setFileFilter(new FileNameExtensionFilter("Image Files", "jpg", "png", "webp"));
+        int result = fileChooser.showOpenDialog(this);
+
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File selectedFile = fileChooser.getSelectedFile();
+            try {
+                Desktop.getDesktop().open(selectedFile);
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
+
+    public static void directories(DefaultMutableTreeNode parent, File directory) {
+        File[] files = directory.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                DefaultMutableTreeNode childNode = new DefaultMutableTreeNode(file.getName());
+                parent.add(childNode);
+                if (file.isDirectory()) {
+                    directories(childNode, file);
+                }
+            }
+        }
+    }
+
+    // Retorna o caminho completo do node selecionado
+    public String getFullPath(DefaultMutableTreeNode node) {
         StringBuilder fullPath = new StringBuilder();
         TreeNode[] nodes = node.getPath();
-        for(int i = 0; i < nodes.length; i++){
+        for (int i = 0; i < nodes.length; i++) {
             fullPath.append(nodes[i].toString());
-            if(i < nodes.length - 1){
+            if (i < nodes.length - 1) {
                 fullPath.append(File.separator);
             }
         }
         return fullPath.toString();
     }
-    //Fim Mét. p/ Obj.
 
-    public static void directories(DefaultMutableTreeNode dir, File file){
-        File[] files = file.listFiles();
-        if(files != null){
-            for(File f : files){
-                DefaultMutableTreeNode subDir = new DefaultMutableTreeNode(f.getName());
-                dir.add(subDir);
-                if(f.isDirectory()){
-                    directories(subDir,f);
-                }
-            }
-        }
+    @Override
+    public void actionPerformed(ActionEvent e) {
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(JaguarUI::new);
     }
 }
